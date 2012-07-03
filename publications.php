@@ -26,6 +26,27 @@ add_action('save_post', 'wclPublicationSaveMeta');
 // Modify the form so we can support file uploads
 add_action('admin_footer','wclFixForm');
 
+add_action('admin_print_scripts', 'wclAdminScripts');
+add_action('admin_print_styles', 'wclAdminStyles');
+add_action('admin_head','wclHideEditor');
+
+function wclAdminScripts() {
+	wp_enqueue_script('media-upload');
+	wp_enqueue_script('thickbox');
+	wp_register_script('my-upload', '/wp-content/plugins/publications/functions/my-scripts.js', array('jquery','media-upload','thickbox'));
+	wp_enqueue_script('my-upload');
+}
+
+function wclAdminStyles() {
+	wp_enqueue_style('thickbox');
+}
+
+function wclHideEditor(){
+	if (get_post_type()=='wcl_publication'){
+		echo ' <style> .postarea{display:none} </style>';
+	}
+}
+
 /**
  * Just to make things easier, this array stores all the information
  * for the publication meta data box.
@@ -67,7 +88,7 @@ $pubBox = array (
 			'std' => ''
 		),
 		array(
-			'name' => 'Location',
+			'name' => 'Conference/Publisher Location',
 			'desc' => '',
 			'id' => 'wcl_location',
 			'type' => 'text',
@@ -75,10 +96,38 @@ $pubBox = array (
 		),
 		array(
 			'name' => 'Video Link',
-			'desc' => '',
+			'desc' => 'A Youtube link to the video',
 			'id' => 'wcl_video',
 			'type' => 'text',
 			'std' => 'http://www.youtube.com/'
+		),
+		array(
+			'name' => 'PDF',
+			'desc' => '',
+			'id' => 'wcl_pdf',
+			'type' => 'text',
+			'std' => ''
+		),
+		array(
+			'name' => '',
+			'desc' => 'Select a PDF',
+			'id' => 'wcl_pdf_button',
+			'type' => 'button',
+			'std' => 'Browse'
+		),
+		array(
+			'name' => 'Thumbnail Image',
+			'desc' => '',
+			'id' => 'wcl_image',
+			'type' => 'text',
+			'std' => ''
+		),
+		array(
+			'name' => '',
+			'desc' => 'Select an Image',
+			'id' => 'wcl_image_button',
+			'type' => 'button',
+			'std' => 'Browse'
 		),
 	)
 );
@@ -118,6 +167,9 @@ function wclShowPublicationMetaBox()
 		case 'checkbox':
 			echo '<input type="checkbox" name="', $field['id'], '" id="', $field['id'], '"', $meta ? ' checked="checked"' : '', ' />';
 			break;
+		case 'button':
+			echo '<input type="button" name="', $field['id'], '" id="', $field['id'], '"value="', $meta ? $meta : $field['std'], '" />';
+			break;
 		}
 		echo '</td><td>',
 			'</td></tr>';
@@ -129,7 +181,7 @@ function wclShowPublicationMetaBox()
 /**
  * Registers the Publication post type.
  */
-function wclCcreatePublicationType() {
+function wclCreatePublicationType() {
 	register_post_type('wcl_publication',
 		array(
 			'labels' => array(
@@ -140,7 +192,7 @@ function wclCcreatePublicationType() {
 			),
 			'public' => true,
 			'has_archive' => true,
-			'supports' => array( 'title', 'thumbnail')
+			'supports' => array( 'title', 'thumbnail', 'editor')
 		)
 	);
 
