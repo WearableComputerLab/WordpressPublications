@@ -14,7 +14,7 @@ Author URI: http://www.20papercups.net
 
 
 // Let's create the custom post type for a publication
-add_action('init', 'createWCLPublicationType');
+add_action('init', 'wclCreatePublicationType');
 
 
 // Create the metadata boxes for the publication post type
@@ -22,6 +22,9 @@ add_action('add_meta_boxes', 'wclPublicationAddMetaBoxes');
 
 // Actually save the custom fields
 add_action('save_post', 'wclPublicationSaveMeta');
+
+// Modify the form so we can support file uploads
+add_action('admin_footer','wclFixForm');
 
 /**
  * Just to make things easier, this array stores all the information
@@ -81,7 +84,7 @@ $pubBox = array (
 );
 
 
-function showWCLPublicationMetaBox()
+function wclShowPublicationMetaBox()
 {
 	global $pubBox, $post;
 	// Use nonce for verification
@@ -126,7 +129,7 @@ function showWCLPublicationMetaBox()
 /**
  * Registers the Publication post type.
  */
-function createWCLPublicationType() {
+function wclCcreatePublicationType() {
 	register_post_type('wcl_publication',
 		array(
 			'labels' => array(
@@ -156,7 +159,7 @@ function createWCLPublicationType() {
 
 function wclPublicationAddMetaBoxes() {
 	global $pubBox;
-	add_meta_box($pubBox['id'], $pubBox['title'], 'showWCLPublicationMetaBox', 'wcl_publication');
+	add_meta_box($pubBox['id'], $pubBox['title'], 'wclShowPublicationMetaBox', 'wcl_publication');
 }
 
 // Save data from meta box
@@ -187,6 +190,13 @@ function wclPublicationSaveMeta($post_id) {
 			delete_post_meta($post_id, $field['id'], $old);
 		}
 	}
+}
+
+function wclFixForm(){
+	echo  '<script type="text/javascript">
+		      jQuery("#post").attr("enctype", "multipart/form-data");
+	        </script>
+				  ';
 }
 
 ?>
