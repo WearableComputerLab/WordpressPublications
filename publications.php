@@ -13,13 +13,20 @@ Author URI: http://www.20papercups.net
 */
 
 
-// Now we set that function up to execute when the admin_notices action is called
-//add_action( 'admin_notices', 'hello_dolly' );
+// Let's create the custom post type for a publication
+add_action('init', 'createWCLPublicationType');
 
 
-add_action('init', 'create_publication_type');
-add_action('add_meta_boxes', 'wcl_publication_add_boxes');
+// Create the metadata boxes for the publication post type
+add_action('add_meta_boxes', 'wclPublicationAddMetaBoxes');
 
+// Actually save the custom fields
+add_action('save_post', 'wclPublicationSaveMeta');
+
+/**
+ * Just to make things easier, this array stores all the information
+ * for the publication meta data box.
+ */
 $pubBox = array (
 	'id' => 'wcl_publication_meta',
 	'title' => "Publication Info",
@@ -74,7 +81,7 @@ $pubBox = array (
 );
 
 
-function show_pub_box()
+function showWCLPublicationMetaBox()
 {
 	global $pubBox, $post;
 	// Use nonce for verification
@@ -119,7 +126,7 @@ function show_pub_box()
 /**
  * Registers the Publication post type.
  */
-function create_publication_type() {
+function createWCLPublicationType() {
 	register_post_type('wcl_publication',
 		array(
 			'labels' => array(
@@ -147,15 +154,14 @@ function create_publication_type() {
 }
 
 
-function wcl_publication_add_boxes() {
+function wclPublicationAddMetaBoxes() {
 	global $pubBox;
-	add_meta_box($pubBox['id'], $pubBox['title'], 'show_pub_box', 'wcl_publication');
+	add_meta_box($pubBox['id'], $pubBox['title'], 'showWCLPublicationMetaBox', 'wcl_publication');
 }
 
-add_action('save_post', 'wcl_pub_save_data');
 // Save data from meta box
-function wcl_pub_save_data($post_id) {
-	global $meta_box;
+function wclPublicationSaveMeta($post_id) {
+	global $pubBox;
 	// verify nonce
 	if (!wp_verify_nonce($_POST['mytheme_meta_box_nonce'], basename(__FILE__))) {
 		return $post_id;
@@ -172,7 +178,7 @@ function wcl_pub_save_data($post_id) {
 	} elseif (!current_user_can('edit_post', $post_id)) {
 		return $post_id;
 	}
-	foreach ($meta_box['fields'] as $field) {
+	foreach ($pubBox['fields'] as $field) {
 		$old = get_post_meta($post_id, $field['id'], true);
 		$new = $_POST[$field['id']];
 		if ($new && $new != $old) {
