@@ -251,4 +251,28 @@ function wclFixForm(){
 				  ';
 }
 
+function wclRenderPublicationList()
+{
+	$currentYear = -1;
+	$output = "";
+	$args = array('post_type' => 'wcl_publication', 'meta_key' => 'wcl_year', 'orderby' => 'meta_value_num');
+	$loop = new WP_Query($args);
+
+	while ($loop->have_posts()) {
+		if (get_post_meta(get_the_ID(), 'wcl_year', true) != $currentYear)
+		{
+			$currentYear = get_post_meta(get_the_ID(), 'wcl_year', true);
+			$output .= "<h2>$currentYear</h2>";
+
+		}
+		$loop->the_post();
+		//$output .= the_title();
+		//$output .= get_post_meta(get_the_ID(), 'wcl_year', true);
+	}
+
+	return $output;
+}
+
+add_shortcode('wcl_publications', 'wclRenderPublicationList');
+
 ?>
