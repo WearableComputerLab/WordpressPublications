@@ -129,6 +129,55 @@ $pubBox = array (
 			'type' => 'button',
 			'std' => 'Browse'
 		),
+		array(
+			'name' => 'Author 1',
+			'desc' => '',
+			'id' => 'wcl_author1',
+			'type' => 'author',
+			'std' => ''
+		),
+		array(
+			'name' => 'Author 2',
+			'desc' => '',
+			'id' => 'wcl_author2',
+			'type' => 'author',
+			'std' => ''
+		),
+		array(
+			'name' => 'Author 3',
+			'desc' => '',
+			'id' => 'wcl_author3',
+			'type' => 'author',
+			'std' => ''
+		),
+		array(
+			'name' => 'Author 4',
+			'desc' => '',
+			'id' => 'wcl_author4',
+			'type' => 'author',
+			'std' => ''
+		),
+		array(
+			'name' => 'Author 5',
+			'desc' => '',
+			'id' => 'wcl_author5',
+			'type' => 'author',
+			'std' => ''
+		),
+		array(
+			'name' => 'Author 6',
+			'desc' => '',
+			'id' => 'wcl_author6',
+			'type' => 'author',
+			'std' => ''
+		),
+		array(
+			'name' => 'Author 7',
+			'desc' => 'Use the dropdown menu if the author is a member of the lab, otherwise type their name.',
+			'id' => 'wcl_author7',
+			'type' => 'author',
+			'std' => ''
+		),
 	)
 );
 
@@ -170,6 +219,22 @@ function wclShowPublicationMetaBox()
 		case 'button':
 			echo '<input type="button" name="', $field['id'], '" id="', $field['id'], '"value="', $meta ? $meta : $field['std'], '" />';
 			break;
+
+		case 'author':
+			echo '<input type="text" style="width: 40%" name="' , $field['id'] , '" id="' , $field['id'] , '" value="', $meta ? $meta : $field['std'] , '" />';
+			echo '<select name="' . $field['id'] . '_preset" id="' . $field['id'] . '_preset" onChange="document.getElementById(\'' . $field['id'] . '\').value = options[selectedIndex].text">';
+			echo '<option></option>';
+			$users = get_users();
+			foreach ($users as $user) {
+				echo '<option value="' . $user->ID . '"', get_post_meta($post->ID, $field['id'] . '_preset', true) == $user->ID ? ' selected="selected"' : '', '>' , $user->display_name , '</option>';
+			}
+			echo '</select>';
+			if (!empty($field['desc']))
+			{
+				echo '<br>';
+				echo $field['desc'];
+			}
+			break;
 		}
 		echo '</td><td>',
 			'</td></tr>';
@@ -195,7 +260,8 @@ function wclCreatePublicationType() {
 			'supports' => array( 'title', 'thumbnail', 'editor')
 		)
 	);
-
+ 
+	/*
 	register_taxonomy( 'publication_author', 'wcl_publication', 
 		array( 'hierarchical' => false, 
 		labels => array(
@@ -206,6 +272,7 @@ function wclCreatePublicationType() {
 		'query_var' => true, 
 		'rewrite' => true, 
 		'show_tagcloud' => true));
+	 */
 }
 
 
@@ -241,6 +308,16 @@ function wclPublicationSaveMeta($post_id) {
 		} elseif ('' == $new && $old) {
 			delete_post_meta($post_id, $field['id'], $old);
 		}
+		if ($field['type'] == "author")
+		{
+			$old = get_post_meta($post_id, $field['id'] . "_preset", true);
+			$new = $_POST[$field['id'] . "_preset"];
+			if ($new && $new != $old) {
+				update_post_meta($post_id, $field['id'] . "_preset", $new);
+			} elseif ('' == $new && $old) {
+				delete_post_meta($post_id, $field['id'] . "_preset", $old);
+			}
+		}
 	}
 }
 
@@ -259,15 +336,45 @@ function wclRenderPublicationList()
 	$loop = new WP_Query($args);
 
 	while ($loop->have_posts()) {
+		$loop->the_post();
 		if (get_post_meta(get_the_ID(), 'wcl_year', true) != $currentYear)
 		{
 			$currentYear = get_post_meta(get_the_ID(), 'wcl_year', true);
-			$output .= "<h2>$currentYear</h2>";
-
+			$output .= '<h1>' . $currentYear . '</h1>';
 		}
-		$loop->the_post();
-		//$output .= the_title();
+
+		$output .= '<p>';
+		$image = get_post_meta(get_the_ID(), "wcl_image", true);
+		if (!empty($image))
+		{
+			$output .= '<img width="60" height="60" src="' . $image . '" style="float:left;">';
+		}
+		for ($i=1; $i<=7; $i++)
+		{
+			$user = get_users(array('include' => get_post_meta(get_the_ID(), "wcl_author$i_preset", true)));
+			$author = get_post_meta(get_the_ID(), "wcl_author$i_preset", true) == "" ? get_post_meta(get_the_ID(), "wcl_author$i", true) : $user[0]->display_name;
+			if ($author == "")
+				break;
+			$output .= $author . ", ";
+		}
+		$output .= '"' . get_the_title() . '", ';
+		$output .= 'in <i>' . get_post_meta(get_the_ID(), 'wcl_proceedings', true) . '</i>, ';
+		$output .= get_post_meta(get_the_ID(), 'wcl_location', true);
+		$output .= " $currentYear.";
+		$output .= '<br>';
+		$pdf = get_post_meta(get_the_ID(), "wcl_pdf", true);
+		if (!empty($pdf))
+		{
+			$output .= '<a href="' . $pdf . '">[pdf]</a> ';
+		}
+		$video = get_post_meta(get_the_ID(), "wcl_video", true);
+		if (!empty($video))
+		{
+			$output .= '<a href="' . $video . '">[video]</a> ';
+		}
 		//$output .= get_post_meta(get_the_ID(), 'wcl_year', true);
+		$output .= "</p>";
+		$output .= '<div style="clear:both"></div>';
 	}
 
 	return $output;
