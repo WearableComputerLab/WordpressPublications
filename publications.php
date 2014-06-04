@@ -115,20 +115,20 @@ $pubBox = array (
 			'type' => 'button',
 			'std' => 'Browse'
 		),
-		array(
-			'name' => 'Thumbnail Image',
-			'desc' => '',
-			'id' => 'wcl_image',
-			'type' => 'text',
-			'std' => ''
-		),
-		array(
-			'name' => '',
-			'desc' => 'Select an Image',
-			'id' => 'wcl_image_button',
-			'type' => 'button',
-			'std' => 'Browse'
-		),
+//		array(
+//			'name' => 'Thumbnail Image',
+//			'desc' => '',
+//			'id' => 'wcl_image',
+//			'type' => 'text',
+//			'std' => ''
+//		),
+//		array(
+//			'name' => '',
+//			'desc' => 'Select an Image',
+//			'id' => 'wcl_image_button',
+//			'type' => 'button',
+//			'std' => 'Browse'
+//		),
 		array(
 			'name' => 'Author 1',
 			'desc' => '',
@@ -256,6 +256,9 @@ function wclCreatePublicationType() {
 				'add_new_item' => __('Add New Publication')
 			),
 			'public' => true,
+			'rewrite' => array (
+			'slug' => 'publications'
+			),
 			'has_archive' => true,
 			'supports' => array( 'title', 'thumbnail', 'editor')
 		)
@@ -332,7 +335,7 @@ function wclRenderPublicationList()
 {
 	$currentYear = -1;
 	$output = "";
-	$args = array('post_type' => 'wcl_publication', 'meta_key' => 'wcl_year', 'orderby' => 'meta_value_num');
+	$args = array('post_type' => 'wcl_publication', 'meta_key' => 'wcl_year', 'orderby' => 'meta_value_num', 'nopaging' => true);
 	$loop = new WP_Query($args);
 
 	while ($loop->have_posts()) {
@@ -344,10 +347,12 @@ function wclRenderPublicationList()
 		}
 
 		$output .= '<p>';
-		$image = get_post_meta(get_the_ID(), "wcl_image", true);
+		//$image = get_post_meta(get_the_ID(), "wcl_image", true);
+		$image = get_the_post_thumbnail(get_the_ID(), array(105,105), array('class' => 'alignleft'));
 		if (!empty($image))
 		{
-			$output .= '<img width="60" height="60" src="' . $image . '" style="float:left;">';
+			//$output .= '<img width="60" height="60" src="' . $image . '" style="float:left;">';
+			$output .= $image;
 		}
 		for ($i=1; $i<=7; $i++)
 		{
@@ -358,7 +363,11 @@ function wclRenderPublicationList()
 			$output .= $author . ", ";
 		}
 		$output .= '"' . get_the_title() . '", ';
-		$output .= 'in <i>' . get_post_meta(get_the_ID(), 'wcl_proceedings', true) . '</i>, ';
+		
+		$proceedings = get_post_meta(get_the_ID(), 'wcl_proceedings', true);
+		if (!empty($proceedings)) {
+			$output .= 'in <i>' . $proceedings . '</i>, ';
+		}
 		$output .= get_post_meta(get_the_ID(), 'wcl_location', true);
 		$output .= " $currentYear.";
 		$output .= '<br>';
